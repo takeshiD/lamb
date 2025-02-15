@@ -1,58 +1,93 @@
-#[derive(Debug, PartialEq)]
-enum Token {
-    LPAREN,
-    RPAREN,
-    INTEGER(i32),
-    FLOAT(f32),
-    CHAR(char),
-    STRING(String),
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    character::complete::{char, digit1, multispace0, multispace1, one_of},
+    combinator::map,
+    error::Error,
+    multi::many0,
+    sequence::delimited,
+    IResult,
+};
+
+#[derive(Debug)]
+enum BuiltinOp {
+    Plus,
+    Minus,
+    Times,
+    Divide,
 }
 
-fn tokenize(code: String) -> Vec<Token> {
-    let mut tokens = Vec::new();
-    for c in code.chars() {
-        match c {}
-    }
+#[derive(Debug)]
+enum Atom {
+    Num(i32),
+    Boolean(bool),
+    Operater(BuiltinOp),
 }
 
-// fn parse(tokens: Vec<Token>) -> Obj {
-// }
-//
-// fn eval(root: Obj, eval: Obj) -> Obj {
-//
-// }
+#[derive(Debug)]
+enum Expr {
+    SelfEvaluation(Atom),
+    Application(Box<Expr>, Vec<Expr>),
+}
+
+fn parse_number(input: &str) -> IResult<&str, Atom, Error<&str>> {
+    let (input, val) = digit1(input)?;
+    Ok((input, Atom::Num(val.parse::<i32>().unwrap())))
+}
+
+fn parse_bool(input: &str) -> IResult<&str, Atom, Error<&str>> {
+    let (input, val) = alt((tag("#t"), tag("#f")))(input)?;
+    Ok((
+        input,
+        match val {
+            "#t" => Atom::Boolean(true),
+            "#f" => Atom::Boolean(false),
+            _ => unreachable!("Invalid input: not boolean"),
+        },
+    ))
+}
+
+fn parse_operater(input: &str) -> IResult<&str, Atom, Error<&str>> {
+    let (input, val) = one_of("+-*/")(input)?;
+    Ok((
+        input,
+        match val {
+            '+' => Atom::Operater(BuiltinOp::Plus),
+            '-' => Atom::Operater(BuiltinOp::Minus),
+            '*' => Atom::Operater(BuiltinOp::Times),
+            '/' => Atom::Operater(BuiltinOp::Divide),
+            _ => unreachable!(),
+        },
+    ))
+}
+
+fn parse_selfeval(input: &str) -> IResult<&str, Expr, Error<&str>> {
+    map(
+        alt((parse_number, parse_bool, parse_operater)),
+        Expr::SelfEvaluation,
+    )(input)
+}
+
+fn parse_pair(input: &str) -> IResult<&str, Expr, Error<&str>> {
+    let (input, _) = char('(')(input)?;
+    let (input, car) = delimited(multispace0, parse_expr, multispace0)(input)?;
+    let (input, cdr) = many0(delimited(multispace0, parse_expr, multispace0))(input)?;
+    let (input, _) = char(')')(input)?;
+    Ok((input, Expr::Application(Box::new(car), cdr)))
+}
+
+fn parse_expr(input: &str) -> IResult<&str, Expr, Error<&str>> {
+    alt((parse_pair, parse_selfeval))(input)
+}
 
 fn main() {
-    println!("Hello, world!");
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn tokenize_atom_integer() {
-        assert_eq!(tokenize("1".to_string()), vec![Token::INTEGER(1)]);
-        assert_eq!(tokenize("12345".to_string()), vec![Token::INTEGER(12345)]);
-    }
-    #[test]
-    fn tokenize_atom_float() {
-        assert_eq!(tokenize("0.123".to_string()), vec![Token::FLOAT(0.123)]);
-        assert_eq!(tokenize("12.0".to_string()), vec![Token::FLOAT(12.0)]);
-    }
-    #[test]
-    fn tokenize_atom_char() {
-        assert_eq!(tokenize("#\\a".to_string()), vec![Token::CHAR('a')]);
-        assert_eq!(tokenize("#\\z".to_string()), vec![Token::CHAR('z')]);
-        assert_eq!(tokenize("#\\A".to_string()), vec![Token::CHAR('A')]);
-        assert_eq!(tokenize("#\\Z".to_string()), vec![Token::CHAR('Z')]);
-    }
-    #[test]
-    fn tokenize_atom_string() {
-        assert_eq!(tokenize("\"a\"".to_string()), vec![Token::STRING("a".to_string())]);
-        assert_eq!(tokenize("\"hello\"".to_string()), vec![Token::STRING("hello".to_string())]);
-    }
-    #[test]
-    fn tokenize_emptylist() {
-        assert_eq!(tokenize("()".to_string()), vec![Token::LPAREN, Token::RPAREN]);
+    let input = "(+ (* 1 2) (- 3 4))";
+    match parse_expr(input) {
+        Ok((_, expr)) => {
+            println!("Input: {input}\nExpr: {expr:#?}");
+        }
+        Err(e) => {
+            println!("{e}");
+        }
     }
 }

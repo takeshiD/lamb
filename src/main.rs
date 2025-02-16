@@ -1,4 +1,6 @@
-use lamb::parser;
+use lamb::parser::{Expr, Atom, parse_expr};
+use lamb::eval::eval_expression;
+use anyhow::Result;
 use std::io::{self, Write};
 
 static PROGRAM_NAME: &str = "lamb";
@@ -7,7 +9,7 @@ static HELP_MESSAGE: &str = "REPL Usage
     'exit' 'quit'    finish lamb REPL
 ";
 
-fn main() {
+fn main() -> Result<()> {
     loop {
         let mut input = String::new();
         io::stdout()
@@ -26,13 +28,32 @@ fn main() {
             }
             _ => (),
         }
-        match parser::parse_expr(&input) {
+        match parse_expr(&input) {
             Ok((_, expr)) => {
-                println!("Input: {input}\nExpr: {expr:#?}");
+                // println!("Input: {input}");
+                if let Ok(ret) = eval_expression(expr) {
+                    match ret {
+                        Expr::SelfEvaluation(atom) => {
+                            match atom {
+                                Atom::Num(n) => println!("{n}"),
+                                Atom::Boolean(b) => {
+                                    if b {
+                                        println!("#t")
+                                    } else {
+                                        println!("#f")
+                                    }
+                                }
+                                _ => eprintln!("Error!")
+                            }
+                        }
+                        _ => eprintln!("Error!")
+                    }
+                }
             }
             Err(e) => {
                 println!("{e}");
             }
         }
     }
+    Ok(())
 }

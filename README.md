@@ -1,4 +1,14 @@
 # lamb - Scheme implementation by Rust
+<!--toc:start-->
+- [lamb - Scheme implementation by Rust](#lamb-scheme-implementation-by-rust)
+  - [文法](#文法)
+    - [データ型](#データ型)
+    - [基本的な演算子](#基本的な演算子)
+    - [変数・関数定義](#変数関数定義)
+    - [制御構造](#制御構造)
+    - [リスト操作](#リスト操作)
+  - [実装予定の機能](#実装予定の機能)
+<!--toc:end-->
 
 lambはRustで実装されたシンプルなScheme処理系です。[R5RS準拠](https://www.unixuser.org/~euske/doc/r5rs-ja/r5rs-ja.pdf)のサブセットを実装しています。
 このREADMEでは

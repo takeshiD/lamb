@@ -8,6 +8,7 @@ use nom::{
     sequence::delimited,
     IResult,
 };
+use anyhow::{Context, Result};
 
 #[derive(Debug, PartialEq)]
 pub enum BuiltinOp {
@@ -68,7 +69,7 @@ fn parse_selfeval(input: &str) -> IResult<&str, Expr, Error<&str>> {
     )(input)
 }
 
-fn parse_pair(input: &str) -> IResult<&str, Expr, Error<&str>> {
+fn parse_procedure(input: &str) -> IResult<&str, Expr, Error<&str>> {
     let (input, _) = char('(')(input)?;
     let (input, car) = delimited(multispace0, parse_expr, multispace0)(input)?;
     let (input, cdr) = many0(delimited(multispace0, parse_expr, multispace0))(input)?;
@@ -77,7 +78,7 @@ fn parse_pair(input: &str) -> IResult<&str, Expr, Error<&str>> {
 }
 
 pub fn parse_expr(input: &str) -> IResult<&str, Expr, Error<&str>> {
-    alt((parse_pair, parse_selfeval))(input)
+    alt((parse_procedure, parse_selfeval))(input)
 }
 
 #[cfg(test)]
@@ -137,7 +138,7 @@ mod tests {
     #[test]
     fn test_parse_pair() {
         assert_eq!(
-            parse_pair("(+ 1 2)"),
+            parse_procedure("(+ 1 2)"),
             Ok((
                 "",
                 Expr::Application(

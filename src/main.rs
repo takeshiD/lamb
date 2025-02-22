@@ -1,6 +1,6 @@
-use lamb::parser::{Expr, Atom, parse_expr};
-use lamb::eval::eval_expression;
 use anyhow::Result;
+use lamb::eval::eval_expression;
+use lamb::parser::{parse_expr, Atom, Expr};
 use std::io::{self, Write};
 
 static PROGRAM_NAME: &str = "lamb";
@@ -31,22 +31,23 @@ fn main() -> Result<()> {
         match parse_expr(&input) {
             Ok((_, expr)) => {
                 // println!("Input: {input}");
-                if let Ok(ret) = eval_expression(expr) {
-                    match ret {
-                        Expr::SelfEvaluation(atom) => {
-                            match atom {
-                                Atom::Num(n) => println!("{n}"),
-                                Atom::Boolean(b) => {
-                                    if b {
-                                        println!("#t")
-                                    } else {
-                                        println!("#f")
-                                    }
+                match eval_expression(expr) {
+                    Ok(e) => match e {
+                        Expr::SelfEvaluation(atom) => match atom {
+                            Atom::Num(n) => println!("{n}"),
+                            Atom::Boolean(b) => {
+                                if b {
+                                    println!("#t")
+                                } else {
+                                    println!("#f")
                                 }
-                                _ => eprintln!("Error!")
                             }
-                        }
-                        _ => eprintln!("Error!")
+                            _ => eprintln!("Error!"),
+                        },
+                        _ => eprintln!("Error!"),
+                    },
+                    Err(e) => {
+                        println!("{e}");
                     }
                 }
             }

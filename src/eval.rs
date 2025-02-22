@@ -9,9 +9,9 @@ fn eval_apply(car: Box<Expr>, cdr: Vec<Expr>) -> Result<Expr> {
                     let ret = cdr.into_iter().fold(Ok(0), |sum, e| match eval_expression(e) {
                         Ok(val) => match val {
                             Expr::SelfEvaluation(Atom::Num(n)) => Ok(sum.unwrap() + n),
-                            _ => Err(anyhow::anyhow!("Failed")),
+                            _ => Err(anyhow::anyhow!("{val:#?} is not a number.")),
                         },
-                        Err(_) => Err(anyhow::anyhow!("Failed")),
+                        Err(_) => Err(anyhow::anyhow!("Evaluation Error")),
                     });
                     Ok(Expr::SelfEvaluation(Atom::Num(ret.unwrap())))
                 }
@@ -19,9 +19,9 @@ fn eval_apply(car: Box<Expr>, cdr: Vec<Expr>) -> Result<Expr> {
                     let ret = cdr.into_iter().fold(Ok(0), |sum, e| match eval_expression(e) {
                         Ok(val) => match val {
                             Expr::SelfEvaluation(Atom::Num(n)) => Ok(sum.unwrap() - n),
-                            _ => Err(anyhow::anyhow!("Failed")),
+                            _ => Err(anyhow::anyhow!("{val:#?} is not a number.")),
                         },
-                        Err(_) => Err(anyhow::anyhow!("Failed")),
+                        Err(_) => Err(anyhow::anyhow!("Evaluation Error")),
                     });
                     Ok(Expr::SelfEvaluation(Atom::Num(ret.unwrap())))
                 }
@@ -29,9 +29,9 @@ fn eval_apply(car: Box<Expr>, cdr: Vec<Expr>) -> Result<Expr> {
                     let ret = cdr.into_iter().fold(Ok(1), |sum, e| match eval_expression(e) {
                         Ok(val) => match val {
                             Expr::SelfEvaluation(Atom::Num(n)) => Ok(sum.unwrap() * n),
-                            _ => Err(anyhow::anyhow!("Failed")),
+                            _ => Err(anyhow::anyhow!("{val:#?} is not a number.")),
                         },
-                        Err(_) => Err(anyhow::anyhow!("Failed")),
+                        Err(_) => Err(anyhow::anyhow!("Evaluation Error")),
                     });
                     Ok(Expr::SelfEvaluation(Atom::Num(ret.unwrap())))
                 }
@@ -39,16 +39,16 @@ fn eval_apply(car: Box<Expr>, cdr: Vec<Expr>) -> Result<Expr> {
                     let ret = cdr.into_iter().fold(Ok(1), |sum, e| match eval_expression(e) {
                         Ok(val) => match val {
                             Expr::SelfEvaluation(Atom::Num(n)) => Ok(sum.unwrap() / n),
-                            _ => Err(anyhow::anyhow!("Failed")),
+                            _ => Err(anyhow::anyhow!("{val:#?} is not a number.")),
                         },
                         Err(_) => Err(anyhow::anyhow!("Failed")),
                     });
                     Ok(Expr::SelfEvaluation(Atom::Num(ret.unwrap())))
                 }
             },
-            _ => Err(anyhow::anyhow!("Failed")),
+            _ => Err(anyhow::anyhow!("{atom:#?} is not Operator"))
         },
-        _ => Err(anyhow::anyhow!("Failed")),
+        _ => Err(anyhow::anyhow!("{car:#?} is not SelfEvaluation")),
     }
 }
 
@@ -58,7 +58,7 @@ pub fn eval_expression(expr: Expr) -> Result<Expr> {
         Expr::SelfEvaluation(atom) => match atom {
             Atom::Num(n) => Ok(Expr::SelfEvaluation(Atom::Num(n))),
             Atom::Boolean(b) => Ok(Expr::SelfEvaluation(Atom::Boolean(b))),
-            _ => Err(anyhow::anyhow!("Failed")),
+            _ => Err(anyhow::anyhow!("{atom:#?} is not a number or boolean")),
         },
     }
 }

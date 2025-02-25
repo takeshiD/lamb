@@ -1,4 +1,5 @@
 use anyhow::Result;
+use nom::error::convert_error;
 use lamb::eval::eval_expression;
 use lamb::parser::{parse_expr, Atom, Expr};
 use std::io::{self, Write};
@@ -47,12 +48,13 @@ fn main() -> Result<()> {
                         _ => eprintln!("Error!"),
                     },
                     Err(e) => {
-                        println!("{e}");
+                        println!("{e:#?}");
                     }
                 }
             }
             Err(e) => {
-                println!("{e}");
+                println!("verbose errors : {}", convert_error(&input, e.unwrap()));
+                
             }
         }
     }

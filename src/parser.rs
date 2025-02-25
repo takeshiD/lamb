@@ -3,12 +3,11 @@ use nom::{
     bytes::complete::tag,
     character::complete::{char, digit1, multispace0, one_of},
     combinator::map,
-    error::Error,
+    error::{context, VerboseError},
     multi::many0,
     sequence::delimited,
     IResult,
 };
-use anyhow::{Context, Result};
 
 #[derive(Debug, PartialEq)]
 pub enum BuiltinOp {
@@ -31,12 +30,12 @@ pub enum Expr {
     Application(Box<Expr>, Vec<Expr>),
 }
 
-fn parse_number(input: &str) -> IResult<&str, Atom, Error<&str>> {
+fn parse_number(input: &str) -> IResult<&str, Atom, VerboseError<&str>> {
     let (input, val) = digit1(input)?;
     Ok((input, Atom::Num(val.parse::<i32>().unwrap())))
 }
 
-fn parse_bool(input: &str) -> IResult<&str, Atom, Error<&str>> {
+fn parse_bool(input: &str) -> IResult<&str, Atom, VerboseError<&str>> {
     let (input, val) = alt((tag("#t"), tag("#f")))(input)?;
     Ok((
         input,
@@ -48,7 +47,7 @@ fn parse_bool(input: &str) -> IResult<&str, Atom, Error<&str>> {
     ))
 }
 
-fn parse_operater(input: &str) -> IResult<&str, Atom, Error<&str>> {
+fn parse_operater(input: &str) -> IResult<&str, Atom, VerboseError<&str>> {
     let (input, val) = one_of("+-*/")(input)?;
     Ok((
         input,
@@ -62,22 +61,22 @@ fn parse_operater(input: &str) -> IResult<&str, Atom, Error<&str>> {
     ))
 }
 
-fn parse_selfeval(input: &str) -> IResult<&str, Expr, Error<&str>> {
+fn parse_selfeval(input: &str) -> IResult<&str, Expr, VerboseError<&str>> {
     map(
         alt((parse_number, parse_bool, parse_operater)),
         Expr::SelfEvaluation,
     )(input)
 }
 
-fn parse_procedure(input: &str) -> IResult<&str, Expr, Error<&str>> {
+fn parse_procedure(input: &str) -> IResult<&str, Expr, VerboseError<&str>> {
     let (input, _) = char('(')(input)?;
-    let (input, car) = delimited(multispace0, parse_expr, multispace0)(input)?;
+    let (input, car) = context("string", delimited(multispace0, parse_expr, multispace0))(input)?;
     let (input, cdr) = many0(delimited(multispace0, parse_expr, multispace0))(input)?;
     let (input, _) = char(')')(input)?;
     Ok((input, Expr::Application(Box::new(car), cdr)))
 }
 
-pub fn parse_expr(input: &str) -> IResult<&str, Expr, Error<&str>> {
+pub fn parse_expr(input: &str) -> IResult<&str, Expr, VerboseError<&str>> {
     alt((parse_procedure, parse_selfeval))(input)
 }
 

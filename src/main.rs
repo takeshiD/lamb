@@ -1,6 +1,6 @@
 use anyhow::Result;
 use nom::error::convert_error;
-use lamb::eval::eval_expression;
+use lamb::eval::{eval_expression, Environment};
 use lamb::parser::{parse_expr, Atom, Expr};
 use std::io::{self, Write};
 
@@ -11,6 +11,15 @@ static HELP_MESSAGE: &str = "REPL Usage
 ";
 
 fn main() -> Result<()> {
+    // 環境を作成
+    let mut env = Environment::new();
+    
+    // 基本的な演算子を環境に追加
+    env.define("+".to_string(), Expr::SelfEvaluation(Atom::Operater(lamb::parser::BuiltinOp::Plus)));
+    env.define("-".to_string(), Expr::SelfEvaluation(Atom::Operater(lamb::parser::BuiltinOp::Minus)));
+    env.define("*".to_string(), Expr::SelfEvaluation(Atom::Operater(lamb::parser::BuiltinOp::Times)));
+    env.define("/".to_string(), Expr::SelfEvaluation(Atom::Operater(lamb::parser::BuiltinOp::Divide)));
+    
     loop {
         let mut input = String::new();
         io::stdout()
@@ -27,12 +36,16 @@ fn main() -> Result<()> {
                 println!("{HELP_MESSAGE}");
                 continue;
             }
+            "env" => {
+                // 環境内の変数を表示（デバッグ用）
+                println!("Current environment: {:#?}", env);
+                continue;
+            }
             _ => (),
         }
         match parse_expr(&input) {
             Ok((_, expr)) => {
-                // println!("Input: {input}");
-                match eval_expression(expr) {
+                match eval_expression(expr, &mut env) {
                     Ok(e) => match e {
                         Expr::SelfEvaluation(atom) => match atom {
                             Atom::Num(n) => println!("{n}"),
@@ -42,19 +55,19 @@ fn main() -> Result<()> {
                                 } else {
                                     println!("#f")
                                 }
-                            }
-                            _ => eprintln!("Error!"),
+                            },
+                            Atom::Symbol(s) => println!("{s}"),
+                            Atom::Operater(_) => println!("<procedure>"),
                         },
-                        _ => eprintln!("Error!"),
+                        _ => println!("Result: {:#?}", e),
                     },
                     Err(e) => {
-                        println!("{e:#?}");
+                        println!("Error: {}", e);
                     }
                 }
             }
             Err(e) => {
-                println!("verbose errors : {}", convert_error(&input, e.unwrap()));
-                
+                println!("Parse error: {:?}", e);
             }
         }
     }

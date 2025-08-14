@@ -103,7 +103,8 @@ lambはRustで実装されたシンプルなScheme処理系です。[R5RS準拠]
 
 - [x] [R5RS準拠](https://www.unixuser.org/~euske/doc/r5rs-ja/r5rs-ja.pdf)の基本データ型 (整数と真偽値のサポート)
 - [x] 数値演算（整数のみ）
-- [ ] 変数・関数定義
+- [x] 変数定義
+- [x] 関数定義
 - [ ] 制御構造（if, cond, let等）
 - [ ] リスト操作と再帰
 - [ ] 文字列操作
